@@ -46,7 +46,12 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Merge the release PR
+        # Note: `--repo` is REQUIRED here. `gh pr merge` resolves the repo
+        # from the current git remote, not from the GH_TOKEN's scope, and
+        # this step intentionally doesn't `actions/checkout` the repo. Passing
+        # --repo explicitly is cheaper than adding a checkout just to make
+        # the CLI happy.
         if: ${{ steps.release.outputs.prs_created == 'true' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: gh pr merge --auto --rebase ${{ fromJSON(steps.release.outputs.pr).number }}
+        run: gh pr merge --repo ${{ github.repository }} --auto --rebase ${{ fromJSON(steps.release.outputs.pr).number }}
