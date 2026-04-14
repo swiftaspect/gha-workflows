@@ -1,0 +1,92 @@
+name: Reusable Publish-Tag
+
+# Called by consumer repos' .github/workflows/publish-tag.yml shim:
+#
+#   jobs:
+#     publish:
+#       uses: swiftaspect/gha-workflows/.github/workflows/publish-tag.yml@v<version>
+#       with:
+#         publish-container: true
+#       secrets: inherit
+
+on:
+  workflow_call:
+    inputs:
+      publish-container:
+        description: |
+          When true, runs `make publish-container` — builds the container image
+          and pushes all tags (primary + alt tags) to the registry. Never pushes
+          `latest`.
+        type: boolean
+        default: false
+      publish-npm:
+        description: |
+          When true, runs `make publish-package` — builds the npm tarball via
+          `npm pack` and publishes to the GitHub Packages npm registry.
+        type: boolean
+        default: false
+      upload-release-assets:
+        description: |
+          When true, uploads artifacts (e.g., the `make build-package` tarball)
+          to the GitHub Release via `gh release upload`. Archival copy; npm
+          registry is the canonical fetch source for libraries.
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  validate-tag:
+    name: Validate tag trigger
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure ref is a tag
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          echo "::error::This workflow must be run against a tag, not a branch. Got: ${{ github.ref }}"
+          exit 1
+
+  publish:
+    needs: validate-tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GitHub Container Registry
+        if: inputs.publish-container
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node (for npm publish)
+        if: inputs.publish-npm
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          registry-url: https://npm.pkg.github.com
+          scope: '@swiftaspect'
+
+      - name: Build npm package
+        if: inputs.publish-npm || inputs.upload-release-assets
+        run: make build-package
+
+      - name: Publish npm package
+        if: inputs.publish-npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make publish-package
+
+      - name: Upload npm tarball to GitHub Release
+        if: inputs.upload-release-assets
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: gh release upload ${{ github.ref_name }} ./*.tgz
+
+      - name: Publish container
+        if: inputs.publish-container
+        run: make publish-container

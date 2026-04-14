@@ -1,0 +1,164 @@
+name: Reusable CI
+
+# Called by consumer repos' .github/workflows/ci.yml shim:
+#
+#   jobs:
+#     ci:
+#       uses: swiftaspect/gha-workflows/.github/workflows/ci.yml@v<version>
+#       with:
+#         check-prerelease-deps: true
+#       secrets: inherit
+
+on:
+  workflow_call:
+    inputs:
+      publish-npm-on-branch:
+        description: |
+          When true, publish a pre-release npm version tagged with the sanitized
+          branch name as a dist-tag. Used by spiras (the shared library) so that
+          consumer repos can resolve `make sync-branch-deps` against matching
+          branch builds.
+        type: boolean
+        default: false
+      check-prerelease-deps:
+        description: |
+          When true, fail if package.json references pre-release or dist-tag
+          `@swiftaspect/*` packages, or if compose files reference branch-tagged
+          `ghcr.io/swiftaspect/*` images. This is the PR gate — only enforced on
+          PRs targeting main.
+        type: boolean
+        default: false
+      compose-up-for-tests:
+        description: |
+          When true, `make start` runs before `make check` (and `make stop` runs
+          after). Use for repos with integration tests that need the full
+          compose dependency stack (db, opa, calas, etc.).
+        type: boolean
+        default: false
+
+permissions:
+  checks: write
+  contents: read
+  packages: write
+  pull-requests: write
+
+jobs:
+  check:
+    name: Lint, typecheck, test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Bring up compose stack
+        if: inputs.compose-up-for-tests
+        run: make start
+
+      - name: Run check (lint + typecheck + test)
+        env:
+          CONTAINER_NETWORK: --network bridge
+        run: make check
+
+      - name: Tear down compose stack
+        if: always() && inputs.compose-up-for-tests
+        run: make stop
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          if-no-files-found: ignore
+
+  check-prerelease-deps:
+    name: PR gate — no pre-release or branch-tag deps
+    if: inputs.check-prerelease-deps && github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Reject non-semver @swiftaspect/* npm deps
+        run: |
+          if [ ! -f package.json ]; then
+            echo "No package.json; skipping npm dep gate"
+            exit 0
+          fi
+          if grep -qE '"@swiftaspect/[^"]+":[[:space:]]*"[^"0-9^~*][^"]*"' package.json; then
+            echo "::error::package.json contains a non-semver @swiftaspect/* dependency value (dist-tag or similar). Bump to a released semver range before merging to main."
+            grep -nE '"@swiftaspect/[^"]+":[[:space:]]*"[^"0-9^~*][^"]*"' package.json
+            exit 1
+          fi
+          if grep -qE '"@swiftaspect/[^"]+":[[:space:]]*"[^"]*-[a-zA-Z]' package.json; then
+            echo "::error::package.json contains a pre-release @swiftaspect/* dependency value. Bump to a stable release before merging to main."
+            grep -nE '"@swiftaspect/[^"]+":[[:space:]]*"[^"]*-[a-zA-Z]' package.json
+            exit 1
+          fi
+          echo "No pre-release or dist-tag @swiftaspect/* deps found."
+
+      - name: Reject branch-tagged ghcr.io/swiftaspect/* images in compose files
+        run: |
+          BAD=0
+          for f in compose.yaml compose.defaults.yaml; do
+            [ -f "$f" ] || continue
+            # Extract each ghcr.io/swiftaspect/<repo>:<tag>, inspect the tag.
+            # Valid tag shapes: v?<digit>.<digit>.<digit> (optionally with -<prerelease>.<n> but we reject those too on main).
+            # Invalid on main: tags that start with a letter (branch slug) OR contain `-` (pre-release).
+            while IFS= read -r ref; do
+              tag="${ref##*:}"
+              case "$tag" in
+                v[0-9]*.[0-9]*.[0-9]*|[0-9]*.[0-9]*.[0-9]*)
+                  # Allowed: v1.2.3 or 1.2.3 — but NOT if it contains `-` (pre-release)
+                  case "$tag" in
+                    *-*)
+                      echo "::error::$f references pre-release tag: $ref"
+                      BAD=1
+                      ;;
+                  esac
+                  ;;
+                *)
+                  echo "::error::$f references non-semver tag (likely a branch slug or 'latest'): $ref"
+                  BAD=1
+                  ;;
+              esac
+            done < <(grep -oE 'ghcr\.io/swiftaspect/[a-z0-9-]+:[^ "'"'"']+' "$f" || true)
+          done
+          exit $BAD
+
+  publish-npm-on-branch:
+    name: Publish branch dist-tag to GitHub Packages npm
+    if: inputs.publish-npm-on-branch && github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/')
+    needs: [check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          registry-url: https://npm.pkg.github.com
+          scope: '@swiftaspect'
+
+      - name: Compute pre-release version + sanitized dist-tag
+        id: version
+        run: |
+          SANITIZED=$(echo "${GITHUB_REF_NAME}" | tr -c '[:alnum:]' '-' | tr '[:upper:]' '[:lower:]')
+          BASE_VERSION=$(jq -r .version package.json)
+          PRERELEASE="${BASE_VERSION}-${SANITIZED}.${GITHUB_RUN_NUMBER}"
+          {
+            echo "prerelease=${PRERELEASE}"
+            echo "sanitized=${SANITIZED}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write pre-release version + publish with dist-tag
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm version "${{ steps.version.outputs.prerelease }}" --no-git-tag-version
+          npm publish --tag "${{ steps.version.outputs.sanitized }}"
