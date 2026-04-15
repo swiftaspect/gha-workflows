@@ -7,11 +7,23 @@ name: Reusable Publish-Tag
 #       uses: swiftaspect/gha-workflows/.github/workflows/publish-tag.yml@v<version>
 #       with:
 #         publish-container: true
+#         makefile-override-file: .github/.ci.override.mk
 #       secrets: inherit
 
 on:
   workflow_call:
     inputs:
+      makefile-override-file:
+        description: |
+          Since we are leveraging Makefiles, and sometimes CI needs different
+          variables, rather than trying to be fancy, we just explicitly set
+          an expected variable from our Makefiles in the CI only environment.
+          And since you can't distribute env settings to reusable workflows,
+          we have to pass it through as an option because it might not always
+          be the same file, or maybe someone has multiple.  Path is relative
+          to the repository root directory, and defaults to our preference.
+        type: string
+        default: .github/ci.override.mk
       publish-container:
         description: |
           When true, runs `make publish-container` — builds the container image
@@ -22,9 +34,20 @@ on:
       publish-npm:
         description: |
           When true, runs `make publish-package` — builds the npm tarball via
-          `npm pack` and publishes to the GitHub Packages npm registry.
+          `npm pack` and publishes to the npm registry.
         type: boolean
         default: false
+      registry-container:
+        description: |
+          The Container registry to publish the tagged containerto. Defaults
+          to GitHub Packages.
+        type: string
+        default: ghcr.io
+      registry-npm:
+        description: |
+          The Node registry to publish the package to. Defaults to GitHub Packages.
+        type: string
+        default: https://npm.pkg.github.com
       upload-release-assets:
         description: |
           When true, uploads artifacts (e.g., the `make build-package` tarball)
@@ -51,12 +74,14 @@ jobs:
   publish:
     needs: validate-tag
     runs-on: ubuntu-latest
+    env:
+      CI_MAKE_OVERRIDES: ${{ inputs.makefile-override-file }}
     steps:
       - name: Login to GitHub Container Registry
         if: inputs.publish-container
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ inputs.registry-container }}
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
@@ -68,7 +93,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          registry-url: https://npm.pkg.github.com
+          registry-url: ${{ inputs.registry-npm }}
           scope: '@swiftaspect'
 
       - name: Build npm package
@@ -89,4 +114,6 @@ jobs:
 
       - name: Publish container
         if: inputs.publish-container
+        env:
+          CONTAINER_REGISTRY=${{ inputs.registry-container }}
         run: make publish-container

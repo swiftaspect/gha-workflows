@@ -7,11 +7,23 @@ name: Reusable Release
 #       uses: swiftaspect/gha-workflows/.github/workflows/release.yml@v<version>
 #       with:
 #         release-type: node       # or "simple" for meta repos
+#         makefile-override-file: .github/.ci.override.mk
 #       secrets: inherit
 
 on:
   workflow_call:
     inputs:
+      makefile-override-file:
+        description: |
+          Since we are leveraging Makefiles, and sometimes CI needs different
+          variables, rather than trying to be fancy, we just explicitly set
+          an expected variable from our Makefiles in the CI only environment.
+          And since you can't distribute env settings to reusable workflows,
+          we have to pass it through as an option because it might not always
+          be the same file, or maybe someone has multiple.  Path is relative
+          to the repository root directory, and defaults to our preference.
+        type: string
+        default: .github/ci.override.mk
       release-type:
         description: |
           release-please release-type. App repos with a package.json use `node`;
@@ -27,6 +39,9 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    env:
+      CI_MAKE_OVERRIDES: ${{ inputs.makefile-override-file }}
+
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
