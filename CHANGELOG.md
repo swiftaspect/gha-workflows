@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/swiftaspect/gha-workflows/compare/v1.0.0...v1.1.0) (2026-04-15)
+
+
+### Features
+
+* Support overriding makefile settings specifically in CI ([5b39190](https://github.com/swiftaspect/gha-workflows/commit/5b391909806af0c37514c15ad2029fa7559f0b25))
+
 ## 1.0.0 (2026-04-14)
 
 
