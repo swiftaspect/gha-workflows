@@ -115,5 +115,5 @@ jobs:
       - name: Publish container
         if: inputs.publish-container
         env:
-          CONTAINER_REGISTRY=${{ inputs.registry-container }}
+          CONTAINER_REGISTRY: ${{ inputs.registry-container }}
         run: make publish-container
