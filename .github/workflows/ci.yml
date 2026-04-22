@@ -174,15 +174,9 @@ jobs:
             echo "sanitized=${SANITIZED}"
           } >> "$GITHUB_OUTPUT"
 
-      - uses: actions/create-github-app-token@v3
-        id: app-token
-        with:
-          app-id: ${{ vars.SAGHAH_APP_ID }}
-          private-key: ${{ secrets.SAGHAH_PRIVATE_KEY }}
-
       - name: Write pre-release version + publish with dist-tag
         env:
-          NODE_AUTH_TOKEN: ${{ steps.app-token.outputs.token }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm version "${{ steps.version.outputs.prerelease }}" --no-git-tag-version
           npm publish --tag "${{ steps.version.outputs.sanitized }}"
