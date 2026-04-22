@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/swiftaspect/gha-workflows/compare/v1.1.0...v1.1.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **ci.yml:** Pre-release to node requires additional access ([1184a40](https://github.com/swiftaspect/gha-workflows/commit/1184a40994bd02807832b573393b01a050be0366))
+
 ## [1.1.0](https://github.com/swiftaspect/gha-workflows/compare/v1.0.0...v1.1.0) (2026-04-15)
 
 
