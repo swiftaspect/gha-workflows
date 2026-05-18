@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/swiftaspect/gha-workflows/compare/v1.1.1...v1.2.0) (2026-05-18)
+
+
+### Features
+
+* **ci:** Move to using `make publish` as language agnostic publishing ([166dede](https://github.com/swiftaspect/gha-workflows/commit/166dedee99f87af89dc8ea355f1a8b1d295cf62e))
+
 ## [1.1.1](https://github.com/swiftaspect/gha-workflows/compare/v1.1.0...v1.1.1) (2026-04-22)
 
 
