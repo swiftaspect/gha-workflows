@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/swiftaspect/gha-workflows/compare/v1.2.0...v1.3.0) (2026-05-18)
+
+
+### Features
+
+* simplify publishing workflows to be more agnostic ([cd0b45e](https://github.com/swiftaspect/gha-workflows/commit/cd0b45e624d26ca2aa11c6a6c4ac0115d13dc538))
+
 ## [1.2.0](https://github.com/swiftaspect/gha-workflows/compare/v1.1.1...v1.2.0) (2026-05-18)
 
 
