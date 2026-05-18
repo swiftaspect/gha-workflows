@@ -39,12 +39,15 @@ on:
           to the repository root directory, and defaults to our preference.
         type: string
         default: .github/ci.override.mk
-      publish-npm-on-branch:
+      publish-on-branch:
         description: |
-          When true, publish a pre-release npm version tagged with the sanitized
-          branch name as a dist-tag. Used by spiras (the shared library) so that
-          consumer repos can resolve `make sync-branch-deps` against matching
-          branch builds.
+          When true, after `make check` passes on a non-main branch, run
+          `make publish` so the Makefile can publish a branch-tagged
+          pre-release artifact (e.g., an npm dist-tag, a container tag). The
+          Makefile owns the language-specific translation; this workflow only
+          exposes GITHUB_REF_NAME, GITHUB_RUN_NUMBER, and GITHUB_TOKEN to it.
+          Used by spiras (the shared library) so consumer repos can resolve
+          `make sync-branch-deps` against matching branch builds.
         type: boolean
         default: false
 
@@ -142,9 +145,9 @@ jobs:
           done
           exit $BAD
 
-  publish-npm-on-branch:
-    name: Publish branch dist-tag to GitHub Packages npm
-    if: inputs.publish-npm-on-branch && github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/')
+  publish-on-branch:
+    name: Publish branch pre-release
+    if: inputs.publish-on-branch && github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/')
     needs: [check]
     runs-on: ubuntu-latest
     env:
@@ -156,27 +159,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          registry-url: https://npm.pkg.github.com
-          scope: '@swiftaspect'
-
-      - name: Compute pre-release version + sanitized dist-tag
-        id: version
-        run: |
-          SANITIZED=$(echo "${GITHUB_REF_NAME}" | tr -c '[:alnum:]' '-' | tr '[:upper:]' '[:lower:]')
-          BASE_VERSION=$(jq -r .version package.json)
-          PRERELEASE="${BASE_VERSION}-${SANITIZED}.${GITHUB_RUN_NUMBER}"
-          {
-            echo "prerelease=${PRERELEASE}"
-            echo "sanitized=${SANITIZED}"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Write pre-release version + publish with dist-tag
+      - name: Publish branch pre-release
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npm version "${{ steps.version.outputs.prerelease }}" --no-git-tag-version
-          npm publish --tag "${{ steps.version.outputs.sanitized }}"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make publish

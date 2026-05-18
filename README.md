@@ -6,7 +6,7 @@ Reusable GitHub Actions workflows shared by all pvaas repos. Each workflow is in
 
 | Workflow | Purpose |
 |----------|---------|
-| `ci.yml` | Lint + typecheck + test (via `make check`), optional pre-release-dep gate (PR to main only), optional npm-branch-publish (for the shared library) |
+| `ci.yml` | Lint + typecheck + test (via `make check`), optional pre-release-dep gate (PR to main only), optional branch pre-release publish (via `make publish`, for the shared library) |
 | `publish-tag.yml` | On tag push: optional container publish, optional npm publish, optional release-asset upload |
 | `release.yml` | release-please-driven release PR creation and auto-merge |
 
@@ -32,7 +32,7 @@ jobs:
     secrets: inherit
 ```
 
-The shared library (`spiras`) additionally sets `publish-npm-on-branch: true` so branch pushes publish dist-tagged pre-release versions consumable by `make sync-branch-deps`.
+The shared library (`spiras`) additionally sets `publish-on-branch: true` so branch pushes invoke `make publish`, which is responsible for emitting a branch-tagged pre-release artifact consumable by `make sync-branch-deps`.
 
 ## Versioning
 
