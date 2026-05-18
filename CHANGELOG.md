@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/swiftaspect/gha-workflows/compare/v1.3.0...v1.3.1) (2026-05-18)
+
+
+### Bug Fixes
+
+* how does this work if the registry isnt authenticated to? ([dcfd864](https://github.com/swiftaspect/gha-workflows/commit/dcfd864c7fa54abc0e27978b1d92616d92a24402))
+
 ## [1.3.0](https://github.com/swiftaspect/gha-workflows/compare/v1.2.0...v1.3.0) (2026-05-18)
 
 
