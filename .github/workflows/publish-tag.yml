@@ -6,7 +6,7 @@ name: Reusable Publish-Tag
 #     publish:
 #       uses: swiftaspect/gha-workflows/.github/workflows/publish-tag.yml@v<version>
 #       with:
-#         publish-container: true
+#         publish: true
 #         makefile-override-file: .github/.ci.override.mk
 #       secrets: inherit
 
@@ -24,35 +24,17 @@ on:
           to the repository root directory, and defaults to our preference.
         type: string
         default: .github/ci.override.mk
-      publish-container:
-        description: |
-          When true, runs `make publish-container` — builds the container image
-          and pushes all tags (primary + alt tags) to the registry. Never pushes
-          `latest`.
-        type: boolean
-        default: false
-      publish-npm:
-        description: |
-          When true, runs `make publish-package` — builds the npm tarball via
-          `npm pack` and publishes to the npm registry.
-        type: boolean
-        default: false
       registry-container:
         description: |
           The Container registry to publish the tagged containerto. Defaults
-          to GitHub Packages.
+          to GitHub Packages, variablized because its part of GHA workflow.
         type: string
         default: ghcr.io
-      registry-npm:
-        description: |
-          The Node registry to publish the package to. Defaults to GitHub Packages.
-        type: string
-        default: https://npm.pkg.github.com
       upload-release-assets:
         description: |
-          When true, uploads artifacts (e.g., the `make build-package` tarball)
-          to the GitHub Release via `gh release upload`. Archival copy; npm
-          registry is the canonical fetch source for libraries.
+          When true, uploads artifacts (e.g., the `make build` tarball)
+          to the GitHub Release via `gh release upload`. Archival copy; registry
+          is the canonical artifact source.
         type: boolean
         default: false
 
@@ -77,8 +59,7 @@ jobs:
     env:
       CI_MAKE_OVERRIDES: ${{ inputs.makefile-override-file }}
     steps:
-      - name: Login to GitHub Container Registry
-        if: inputs.publish-container
+      - name: Login to GitHub Container Registry - not always necessary
         uses: docker/login-action@v3
         with:
           registry: ${{ inputs.registry-container }}
@@ -88,32 +69,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup Node (for npm publish)
-        if: inputs.publish-npm
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          registry-url: ${{ inputs.registry-npm }}
-          scope: '@swiftaspect'
+      - name: Run build(s)
+        run: make build
 
-      - name: Build npm package
-        if: inputs.publish-npm || inputs.upload-release-assets
-        run: make build-package
+      - name: Publish package(s)
+        run: make publish
 
-      - name: Publish npm package
-        if: inputs.publish-npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: make publish-package
-
-      - name: Upload npm tarball to GitHub Release
+      - name: Upload artifact tarball to GitHub Release
         if: inputs.upload-release-assets
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: gh release upload ${{ github.ref_name }} ./*.tgz
-
-      - name: Publish container
-        if: inputs.publish-container
-        env:
-          CONTAINER_REGISTRY: ${{ inputs.registry-container }}
-        run: make publish-container
