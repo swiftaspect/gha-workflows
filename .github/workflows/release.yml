@@ -41,7 +41,7 @@ jobs:
 
       - name: Run Release Please
         id: release
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v5.0.0
         with:
           release-type: ${{ inputs.release-type }}
           token: ${{ steps.app-token.outputs.token }}
