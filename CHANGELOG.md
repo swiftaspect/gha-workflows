@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0](https://github.com/swiftaspect/gha-workflows/compare/v1.3.1...v1.4.0) (2026-05-25)
+
+
+### Features
+
+* convert GHA runs-on to specific tagged ubuntu release ([46ae633](https://github.com/swiftaspect/gha-workflows/commit/46ae633474fe1dd29086847f726f1064d2793498))
+
+
+### Bug Fixes
+
+* **ci:** Authenticate to container registry to pull and push images ([9d5b32c](https://github.com/swiftaspect/gha-workflows/commit/9d5b32cbb3de0d0997b741768828c138461e3b52))
+* Update googleapis/release-please-action to latest tagged release ([b42e923](https://github.com/swiftaspect/gha-workflows/commit/b42e923fa023af64905b95b1158f93cf26dece21))
+
 ## [1.3.1](https://github.com/swiftaspect/gha-workflows/compare/v1.3.0...v1.3.1) (2026-05-18)
 
 
