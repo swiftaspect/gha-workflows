@@ -50,6 +50,12 @@ on:
           `make sync-branch-deps` against matching branch builds.
         type: boolean
         default: false
+      registry-container:
+        description: |
+          The Container registry to publish the tagged containerto. Defaults
+          to GitHub Packages, variablized because its part of GHA workflow.
+        type: string
+        default: ghcr.io
 
 permissions:
   checks: write
@@ -63,7 +69,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI_MAKE_OVERRIDES: ${{ inputs.makefile-override-file }}
+      CONTAINER_REGISTRY: ${{ inputs.registry-container }}
     steps:
+      - name: Login to GitHub Container Registry - not always necessary
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
       - name: Checkout
         uses: actions/checkout@v5
 
@@ -152,12 +166,20 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI_MAKE_OVERRIDES: ${{ inputs.makefile-override-file }}
+      CONTAINER_REGISTRY: ${{ inputs.registry-container }}
     permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Login to GitHub Container Registry - not always necessary
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
       - name: Publish branch pre-release
         env:
