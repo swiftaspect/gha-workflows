@@ -66,7 +66,7 @@ permissions:
 jobs:
   check:
     name: Lint, typecheck, test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CI_MAKE_OVERRIDES: ${{ inputs.makefile-override-file }}
       CONTAINER_REGISTRY: ${{ inputs.registry-container }}
@@ -105,7 +105,7 @@ jobs:
   check-prerelease-deps:
     name: PR gate — no pre-release or branch-tag deps
     if: inputs.check-prerelease-deps && github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CI_MAKE_OVERRIDES: ${{ inputs.makefile-override-file }}
     steps:
@@ -163,7 +163,7 @@ jobs:
     name: Publish branch pre-release
     if: inputs.publish-on-branch && github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/')
     needs: [check]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CI_MAKE_OVERRIDES: ${{ inputs.makefile-override-file }}
       CONTAINER_REGISTRY: ${{ inputs.registry-container }}
