@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/swiftaspect/gha-workflows/compare/v1.4.0...v1.4.1) (2026-05-27)
+
+
+### Bug Fixes
+
+* **publish-tag:** The publish workflows require GITHUB_TOKEN for auth to the registries ([cda69bb](https://github.com/swiftaspect/gha-workflows/commit/cda69bbf230e1f920ee7ca031da1348518672f2b))
+
 ## [1.4.0](https://github.com/swiftaspect/gha-workflows/compare/v1.3.1...v1.4.0) (2026-05-25)
 
 
