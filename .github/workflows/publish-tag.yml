@@ -58,6 +58,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       CI_MAKE_OVERRIDES: ${{ inputs.makefile-override-file }}
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Login to GitHub Container Registry - not always necessary
         uses: docker/login-action@v4.2.0
@@ -77,6 +78,4 @@ jobs:
 
       - name: Upload artifact tarball to GitHub Release
         if: inputs.upload-release-assets
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
         run: gh release upload ${{ github.ref_name }} ./*.tgz
