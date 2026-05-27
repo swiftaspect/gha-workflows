@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/swiftaspect/gha-workflows/compare/v1.4.1...v1.4.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* **ci:** The `make start` for CI will sometimes need to pull from an authenticated registry just like docker ([134a019](https://github.com/swiftaspect/gha-workflows/commit/134a0194907dfbcf469ccd1f6f7dd68b3771e7ec))
+
 ## [1.4.1](https://github.com/swiftaspect/gha-workflows/compare/v1.4.0...v1.4.1) (2026-05-27)
 
 
