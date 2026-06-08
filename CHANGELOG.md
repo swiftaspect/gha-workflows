@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.3](https://github.com/swiftaspect/gha-workflows/compare/v1.4.2...v1.4.3) (2026-06-08)
+
+
+### Bug Fixes
+
+* **ci:** Add GITHUB_TOKEN to CI lint and test step ([77052c3](https://github.com/swiftaspect/gha-workflows/commit/77052c3517c83d3adb6e906ac90c61c2c086cbb0))
+
 ## [1.4.2](https://github.com/swiftaspect/gha-workflows/compare/v1.4.1...v1.4.2) (2026-05-27)
 
 
