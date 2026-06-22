@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.4](https://github.com/swiftaspect/gha-workflows/compare/v1.4.3...v1.4.4) (2026-06-22)
+
+
+### Bug Fixes
+
+* **publish-tag:** Was missing necessary variable passing for this workflow to work ([c94b994](https://github.com/swiftaspect/gha-workflows/commit/c94b9949783f1954cba6608cdb3af2aa8789dbcc))
+
 ## [1.4.3](https://github.com/swiftaspect/gha-workflows/compare/v1.4.2...v1.4.3) (2026-06-08)
 
 
