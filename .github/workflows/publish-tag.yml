@@ -71,9 +71,13 @@ jobs:
         uses: actions/checkout@v6.0.2
 
       - name: Run build(s)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make build
 
       - name: Publish package(s)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make publish
 
       - name: Upload artifact tarball to GitHub Release
