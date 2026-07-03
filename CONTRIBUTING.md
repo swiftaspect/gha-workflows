@@ -2,7 +2,7 @@
 
 ## Scope of changes
 
-This repo holds **reusable workflows** consumed by the other pvaas repos. Changes here affect every consumer the next time they bump their pin. Take that seriously:
+This repo holds **reusable workflows** consumed by other repos. Changes here affect every consumer the next time they bump their pin. Take that seriously:
 
 - Breaking changes (removing inputs, changing required-ness, changing semantics) get a `feat!:` or `BREAKING CHANGE:` commit and a new major version from release-please.
 - Additive changes (new optional input with a default) are `feat:` and get a minor bump.
