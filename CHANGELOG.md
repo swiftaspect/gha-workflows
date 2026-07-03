@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/swiftaspect/gha-workflows/compare/v1.4.4...v1.5.0) (2026-07-03)
+
+
+### Features
+
+* Delegate the PR-gate manifest check to make check-prerelease-deps ([af48bfe](https://github.com/swiftaspect/gha-workflows/commit/af48bfee1d1bf80cbf08b2383587e03aa187b341))
+
 ## [1.4.4](https://github.com/swiftaspect/gha-workflows/compare/v1.4.3...v1.4.4) (2026-06-22)
 
 
