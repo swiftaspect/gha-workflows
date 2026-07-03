@@ -81,7 +81,7 @@
 
 ### Features
 
-* initial reusable workflows for pvaas ([0a322f7](https://github.com/swiftaspect/gha-workflows/commit/0a322f7fc06b92f16205a21b3b6d96ba9d96b98b))
+* initial reusable workflows ([0a322f7](https://github.com/swiftaspect/gha-workflows/commit/0a322f7fc06b92f16205a21b3b6d96ba9d96b98b))
 
 
 ### Bug Fixes

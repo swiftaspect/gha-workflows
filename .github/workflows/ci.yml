@@ -25,7 +25,7 @@ on:
         description: |
           When true, `make start` runs before `make check` (and `make stop` runs
           after). Use for repos with integration tests that need the full
-          compose dependency stack (db, opa, calas, etc.).
+          compose dependency stack (db, cache, etc.).
         type: boolean
         default: false
       makefile-override-file:
@@ -46,7 +46,7 @@ on:
           pre-release artifact (e.g., an npm dist-tag, a container tag). The
           Makefile owns the language-specific translation; this workflow only
           exposes GITHUB_REF_NAME, GITHUB_RUN_NUMBER, and GITHUB_TOKEN to it.
-          Used by spiras (the shared library) so consumer repos can resolve
+          Used by the shared library so consumer repos can resolve
           `make sync-branch-deps` against matching branch builds.
         type: boolean
         default: false
