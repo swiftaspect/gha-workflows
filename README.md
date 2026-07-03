@@ -52,8 +52,8 @@ Tags follow conventional-commits-driven release-please bumps. No floating `v1` t
 
 | Input | Type | Default | Purpose |
 |-------|------|---------|---------|
-| `publish-npm-on-branch` | bool | `false` | After `make check` passes, publish a pre-release npm version with the sanitized branch name as dist-tag. Used by spiras. |
-| `check-prerelease-deps` | bool | `false` | PR gate (only runs on PRs targeting `main`): fail if `package.json` has pre-release or dist-tag `@swiftaspect/*` deps, or if compose files reference branch-tagged `ghcr.io/swiftaspect/*` images. |
+| `publish-on-branch` | bool | `false` | After `make check` passes on a non-main branch, run `make publish` so the repo's Makefile emits a branch-tagged pre-release artifact (npm dist-tag, container tag, …). Language-agnostic — the Makefile owns the translation. |
+| `check-prerelease-deps` | bool | `false` | PR gate (only runs on PRs targeting `main`): rejects pre-release / dist-tag `@swiftaspect/*` sibling deps and branch-tagged `ghcr.io/swiftaspect/*` compose images. The manifest half is delegated to the repo's `make check-prerelease-deps` target (language-owned; skipped with a notice if absent); the compose image-tag check runs in-workflow (already language-agnostic). |
 | `compose-up-for-tests` | bool | `false` | Run `make start` before `make check` and `make stop` after. For repos whose tests need the compose dependency stack. |
 
 ### `publish-tag.yml`

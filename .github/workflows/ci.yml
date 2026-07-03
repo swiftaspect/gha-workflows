@@ -115,23 +115,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6.0.2
 
-      - name: Reject non-semver @swiftaspect/* npm deps
+      - name: Reject pre-release / dist-tag sibling deps (manifest)
         run: |
-          if [ ! -f package.json ]; then
-            echo "No package.json; skipping npm dep gate"
-            exit 0
+          # Language-agnostic: the manifest check is owned by a Makefile target
+          # the language template provides (`package.json` for TS, `pyproject.toml`
+          # / `uv.lock` for Python, a no-op for the bundle repo). CI only delegates.
+          if grep -qE '^check-prerelease-deps:' Makefile 2>/dev/null; then
+            make check-prerelease-deps
+          else
+            echo "::notice::No 'check-prerelease-deps' target in Makefile; skipping the manifest dep gate. The language template provides this target — add it to enable the check."
           fi
-          if grep -qE '"@swiftaspect/[^"]+":[[:space:]]*"[^"0-9^~*][^"]*"' package.json; then
-            echo "::error::package.json contains a non-semver @swiftaspect/* dependency value (dist-tag or similar). Bump to a released semver range before merging to main."
-            grep -nE '"@swiftaspect/[^"]+":[[:space:]]*"[^"0-9^~*][^"]*"' package.json
-            exit 1
-          fi
-          if grep -qE '"@swiftaspect/[^"]+":[[:space:]]*"[^"]*-[a-zA-Z]' package.json; then
-            echo "::error::package.json contains a pre-release @swiftaspect/* dependency value. Bump to a stable release before merging to main."
-            grep -nE '"@swiftaspect/[^"]+":[[:space:]]*"[^"]*-[a-zA-Z]' package.json
-            exit 1
-          fi
-          echo "No pre-release or dist-tag @swiftaspect/* deps found."
 
       - name: Reject branch-tagged ghcr.io/swiftaspect/* images in compose files
         run: |
