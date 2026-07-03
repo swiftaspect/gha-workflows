@@ -34,6 +34,8 @@ jobs:
 
 The shared library (`spiras`) additionally sets `publish-on-branch: true` so branch pushes invoke `make publish`, which is responsible for emitting a branch-tagged pre-release artifact consumable by `make sync-branch-deps`.
 
+**Branch pre-releases go to the registry only — never a GitHub Release.** The `publish-on-branch` job runs under `permissions: contents: read, packages: write`, so it is structurally incapable of creating a GitHub Release or pushing a git tag (both require `contents: write`). Branch builds land solely as registry artifacts: an npm dist-tag and/or a container tag. GitHub Releases and git tags are produced *only* by the real-release path (`release.yml` / `publish-tag.yml`, which run with `contents: write`). A repo's `make publish` must uphold this — it may push to package/container registries but must not run `gh release …` or `git tag`/`git push`.
+
 ## Versioning
 
 Pin consumers to a specific tag:
