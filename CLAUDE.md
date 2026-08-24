@@ -17,3 +17,12 @@ Before considering a task complete:
 - The `release.yml` reusable workflow has a required `release-type` input with no default — app repos pass `node`, meta repos pass `simple`.
 - Never add a `latest` tag anywhere.
 - `gh pr merge --auto --rebase <number>` — no `-R`/`--repo` flag (token is already scoped).
+
+## Agent skills
+
+Repo-specific configuration for the engineering skills:
+
+- Issue tracker: read `docs/agents/issue-tracker.md`
+- Domain docs and ADRs: read `docs/agents/domain.md`
+
+When asking the user questions (grilling), keep each question short and in literal plain language. Prefer fewer, sharper questions over long lists.
