@@ -1,0 +1,21 @@
+name: Self Dependabot Auto-Merge
+
+on:
+  workflow_run:
+    workflows: ['Self CI']
+    types: [completed]
+
+permissions:
+  checks: read
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    # Cost filter, not the gate; the reusable workflow re-checks all of it.
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.actor.login == 'dependabot[bot]'
+      && startsWith(github.event.workflow_run.head_branch, 'dependabot/')
+    uses: ./.github/workflows/dependabot-automerge.yml
+    secrets: inherit

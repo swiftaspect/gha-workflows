@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # `fix`: an action pin inside a reusable workflow is what a consumer gets
+  # by pinning a tag, so a bump that cut no release would strand them.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "fix"
+      include: "scope"
