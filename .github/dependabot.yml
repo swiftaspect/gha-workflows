@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # An action pinned inside a reusable workflow is part of what consumers get
+  # when they pin a tag of this repository, so a bump that cut no release
+  # would leave every consumer on the old pin. That makes these `fix` rather
+  # than `chore`, including the ones only the self-CI workflows use.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "fix"
+      include: "scope"
