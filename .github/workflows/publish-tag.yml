@@ -68,7 +68,7 @@ jobs:
           password: ${{ github.token }}
 
       - name: Checkout
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.1
 
       - name: Run build(s)
         env:
