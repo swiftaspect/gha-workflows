@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/swiftaspect/gha-workflows/compare/v1.5.0...v1.6.0) (2026-08-28)
+
+
+### Features
+
+* add a reusable dependabot auto-merge workflow ([715076a](https://github.com/swiftaspect/gha-workflows/commit/715076a8807422ef3707bf49369fd003eb86f542))
+
 ## [1.5.0](https://github.com/swiftaspect/gha-workflows/compare/v1.4.4...v1.5.0) (2026-07-03)
 
 
