@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.0](https://github.com/swiftaspect/gha-workflows/compare/v1.6.0...v1.7.0) (2026-08-28)
+
+
+### Features
+
+* move a `v1` tag onto every release ([788bd1d](https://github.com/swiftaspect/gha-workflows/commit/788bd1dd012d926c5b732e708a02312a56a4b527))
+
+
+### Bug Fixes
+
+* grant `checks: read` so the merge gate can read the check runs ([9a47542](https://github.com/swiftaspect/gha-workflows/commit/9a47542fe50ea0fede65913af05e182929ca964b))
+
 ## [1.6.0](https://github.com/swiftaspect/gha-workflows/compare/v1.5.0...v1.6.0) (2026-08-28)
 
 
