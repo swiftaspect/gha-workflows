@@ -61,7 +61,7 @@ jobs:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Login to GitHub Container Registry - not always necessary
-        uses: docker/login-action@v4.2.0
+        uses: docker/login-action@v4.6.0
         with:
           registry: ${{ inputs.registry-container }}
           username: ${{ github.actor }}
