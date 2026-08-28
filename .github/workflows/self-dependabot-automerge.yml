@@ -1,0 +1,32 @@
+name: Self Dependabot Auto-Merge
+
+# Dogfoods the reusable dependabot-automerge.yml against this very repo.
+# `./` resolves to the default branch here, because a `workflow_run`
+# workflow always runs the default branch's copy of itself.
+
+on:
+  workflow_run:
+    workflows: ['Self CI']
+    types: [completed]
+
+# The default token is read-only, so without this the merge is refused.
+# `checks` is easy to miss: an explicit block sets every scope it does not
+# name to `none`, and the merge gate reads the check runs on the head commit.
+permissions:
+  checks: read
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    # Evaluated before a runner is allocated. Self CI runs on every branch
+    # push, including branches with no pull request yet; those are skipped
+    # here rather than paying for a job that exits immediately. This is a
+    # cost filter, not the gate. The reusable workflow re-checks all of it
+    # against the API, along with the things an event payload cannot prove.
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.actor.login == 'dependabot[bot]'
+      && startsWith(github.event.workflow_run.head_branch, 'dependabot/')
+    uses: ./.github/workflows/dependabot-automerge.yml
+    secrets: inherit

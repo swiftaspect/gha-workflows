@@ -39,6 +39,19 @@ docker run --rm -v "$(pwd)":/repo:Z -w /repo rhysd/actionlint:latest .github/wor
 5. Run `actionlint` locally.
 6. Open a PR.
 
+## Dependency updates
+
+Dependabot opens the pull requests for the actions these workflows pin, and
+`self-dependabot-automerge.yml` runs the repository's own
+`dependabot-automerge.yml` against them: a pull request merges without review
+when every check on its head commit has finished without failing and dependabot
+classified the bump as patch or minor. A major action version always waits for
+a person, as does anything dependabot could not classify.
+
+Those bumps are `fix` and cut a release. An action pinned inside a reusable
+workflow is part of what a consumer gets by pinning a tag, so a bump that cut
+no release would leave every consumer on the old pin.
+
 ## Release
 
 Managed by release-please. Merging the auto-generated release PR cuts a tag,
