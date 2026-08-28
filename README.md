@@ -90,6 +90,7 @@ on:
     types: [completed]
 
 permissions:
+  checks: read
   contents: write
   pull-requests: write
 
@@ -110,9 +111,12 @@ a test run finishes and carries a token that can act on the result. It also
 means a PR cannot change the rules that judge it, since `workflow_run`
 workflows always execute the copy on the default branch.
 
-`permissions` is required. A called workflow can only narrow what its caller
-was given, so where `default_workflow_permissions` is `read` the merge is
-refused without it.
+`permissions` is required, and all three scopes are. A called workflow can only
+narrow what its caller was given, so where `default_workflow_permissions` is
+`read` nothing works without the block. `checks: read` is the one that is easy
+to miss: an explicit `permissions` block sets every scope it does not name to
+`none`, and the merge gate reads the check runs on the head commit, so leaving
+it out fails with `Resource not accessible by integration (HTTP 403)`.
 
 The `if` is a cost filter, not the security boundary. A test workflow that
 triggers on `push` runs for every branch, including branches with no PR, and
