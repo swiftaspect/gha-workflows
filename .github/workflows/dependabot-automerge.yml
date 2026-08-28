@@ -22,9 +22,6 @@ on:
         default: 'version-update:semver-patch version-update:semver-minor'
 
 permissions:
-  # `checks` is what the merge gate reads. An explicit block sets every scope
-  # it does not name to `none`, so leaving it out made the check-run lookup
-  # fail with a 403 and no pull request could ever be merged.
   checks: read
   contents: write
   pull-requests: write

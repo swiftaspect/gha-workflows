@@ -1,0 +1,36 @@
+name: Self Major Tag
+
+# For callers that cannot pin an exact tag: a shim inside a project template
+# is a jinja source, so dependabot cannot see its pin. Everything else pins
+# exactly.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  move:
+    name: Move the major tag to this release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+
+      - name: Force the major tag onto this commit
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          major="${TAG%%.*}"
+          if [ "$major" = "$TAG" ]; then
+            echo "::error::$TAG is not a vX.Y.Z tag, so there is no major to move."
+            exit 1
+          fi
+          # Lightweight, so no committer identity is needed.
+          git tag -f "$major" "$GITHUB_SHA"
+          git push -f origin "refs/tags/$major"
+          echo "::notice::$major now points at $TAG."

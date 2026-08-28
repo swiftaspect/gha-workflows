@@ -45,7 +45,16 @@ Pin consumers to a specific tag:
 uses: swiftaspect/gha-workflows/.github/workflows/ci.yml@v0.1.0
 ```
 
-Tags follow conventional-commits-driven release-please bumps. No floating `v1` tag — consumers update their pin explicitly when adopting a new version.
+Tags follow conventional-commits-driven release-please bumps. Consumers update
+their pin explicitly when adopting a new version.
+
+A `v1` tag also exists, moved onto every `v1.x.y` release by
+`self-major-tag.yml`. It is not the recommended pin. It is there for one caller
+shape that cannot use an exact one: a shim that lives inside a project template
+as a jinja source, where the pin is unreachable to dependabot, because
+dependabot matches manifests by filename. Pin `@v1` only if that describes you,
+and understand that a change here then reaches you on your next run with no
+review step in between.
 
 ## Inputs reference
 
