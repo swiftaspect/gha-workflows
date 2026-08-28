@@ -1,0 +1,192 @@
+name: Reusable Dependabot Auto-Merge
+
+# Shim, inputs, and what is checked before a merge: see the
+# `dependabot-automerge.yml` section of README.md.
+
+on:
+  workflow_call:
+    inputs:
+      merge-method:
+        description: |
+          `rebase` or `merge`. `squash` errors rather than defaulting away,
+          because it collapses the Conventional Commit messages release
+          tooling reads from the default branch.
+        type: string
+        default: rebase
+      allowed-update-types:
+        description: |
+          Space-separated dependabot `update-type` values. Every dependency
+          in a pull request must declare one of them, so a dependency
+          carrying no `update-type` at all can never match.
+        type: string
+        default: 'version-update:semver-patch version-update:semver-minor'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    name: Merge if the tests passed
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      RUN_ACTOR: ${{ github.event.workflow_run.actor.login }}
+      MERGE_METHOD: ${{ inputs.merge-method }}
+      ALLOWED_UPDATE_TYPES: ${{ inputs.allowed-update-types }}
+    steps:
+      - name: Reject a merge method that would rewrite the commits
+        run: |
+          set -euo pipefail
+          case "$MERGE_METHOD" in
+            rebase | merge) ;;
+            *)
+              echo "::error::merge-method must be 'rebase' or 'merge', got '$MERGE_METHOD'."
+              exit 1
+              ;;
+          esac
+
+      # Repeats the shim's `if` against the API. The shim lives in the
+      # consumer repo, so anyone with write access there can weaken it.
+      - name: Verify the pull request is dependabot's and unmodified
+        id: pr
+        run: |
+          set -euo pipefail
+          echo "eligible=false" >>"$GITHUB_OUTPUT"
+
+          if [ "$RUN_ACTOR" != "dependabot[bot]" ]; then
+            echo "::notice::Test run was triggered by $RUN_ACTOR, not dependabot."
+            exit 0
+          fi
+
+          pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/pulls" \
+                --jq 'map(select(.state == "open")) | first // empty')
+          if [ -z "$pr" ]; then
+            echo "::notice::$HEAD_SHA has no open pull request."
+            exit 0
+          fi
+
+          number=$(printf '%s' "$pr" | jq -r '.number')
+          author=$(printf '%s' "$pr" | jq -r '.user.login')
+          head_repo=$(printf '%s' "$pr" | jq -r '.head.repo.full_name')
+          head_sha=$(printf '%s' "$pr" | jq -r '.head.sha')
+          base_ref=$(printf '%s' "$pr" | jq -r '.base.ref')
+          draft=$(printf '%s' "$pr" | jq -r '.draft')
+
+          # Dependabot's commits are signed, so a commit pushed onto the
+          # branch by anyone else fails the author or signature check.
+          commit=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA" \
+                    --jq '{author: (.author.login // ""), verified: .commit.verification.verified}')
+          commit_author=$(printf '%s' "$commit" | jq -r '.author')
+          verified=$(printf '%s' "$commit" | jq -r '.verified')
+
+          fail() { echo "::notice::#$number left for review: $1"; exit 0; }
+
+          [ "$author" = "dependabot[bot]" ] || fail "opened by $author."
+          [ "$commit_author" = "dependabot[bot]" ] || fail "head commit authored by $commit_author."
+          [ "$verified" = "true" ] || fail "head commit signature is not verified."
+          [ "$head_repo" = "$GITHUB_REPOSITORY" ] || fail "head branch lives in $head_repo."
+          [ "$head_sha" = "$HEAD_SHA" ] || fail "head moved to $head_sha since the tests ran."
+          [ "$base_ref" = "$DEFAULT_BRANCH" ] || fail "targets $base_ref, not the default branch."
+          [ "$draft" = "false" ] || fail "still a draft."
+
+          echo "number=$number" >>"$GITHUB_OUTPUT"
+          echo "eligible=true" >>"$GITHUB_OUTPUT"
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+
+      # The triggering event carries one workflow's result, and a repo can
+      # run several, so the verdict comes from the commit's checks instead.
+      - name: Verify every check on the head commit passed
+        id: checks
+        if: steps.pr.outputs.eligible == 'true'
+        run: |
+          set -euo pipefail
+          echo "eligible=false" >>"$GITHUB_OUTPUT"
+          number="${{ steps.pr.outputs.number }}"
+
+          runs=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/check-runs" \
+                  --paginate --jq '.check_runs[] | [.status, (.conclusion // "none"), .name] | @tsv')
+
+          if [ -z "$runs" ]; then
+            echo "::notice::#$number left for review: no checks reported on $HEAD_SHA."
+            exit 0
+          fi
+
+          while IFS=$'\t' read -r status conclusion name; do
+            if [ "$status" != "completed" ]; then
+              echo "::notice::#$number not ready: '$name' is $status. A later run will decide."
+              exit 0
+            fi
+            # Conditional jobs report skipped and neutral routinely, so
+            # demanding success everywhere would never merge anything.
+            case "$conclusion" in
+              success | skipped | neutral) ;;
+              *)
+                echo "::notice::#$number left for review: '$name' concluded $conclusion."
+                exit 0
+                ;;
+            esac
+          done <<<"$runs"
+
+          echo "eligible=true" >>"$GITHUB_OUTPUT"
+
+      - name: Verify the update type is allowed without review
+        id: update_type
+        if: steps.checks.outputs.eligible == 'true'
+        run: |
+          set -euo pipefail
+          echo "eligible=false" >>"$GITHUB_OUTPUT"
+          number="${{ steps.pr.outputs.number }}"
+
+          block=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA" --jq '.commit.message' \
+                  | awk '/^updated-dependencies:$/ { inside = 1; next } /^\.\.\.$/ { inside = 0 } inside')
+
+          names=$(printf '%s\n' "$block" | grep -c '^- dependency-name:' || true)
+          types=$(printf '%s\n' "$block" | sed -n 's/^  update-type: //p')
+          typed=$(printf '%s\n' "$types" | grep -c . || true)
+
+          if [ "$names" -eq 0 ]; then
+            echo "::notice::#$number left for review: no updated-dependencies block in the commit message."
+            exit 0
+          fi
+
+          # Counted rather than read per entry, because dependabot drops the
+          # field entirely for a version it cannot parse as semver.
+          if [ "$names" -ne "$typed" ]; then
+            echo "::notice::#$number left for review: $((names - typed)) of $names dependencies declare no update-type."
+            exit 0
+          fi
+
+          while read -r type; do
+            [ -n "$type" ] || continue
+            case " $ALLOWED_UPDATE_TYPES " in
+              *" $type "*) ;;
+              *)
+                echo "::notice::#$number left for review: $type is not merged without a human."
+                exit 0
+                ;;
+            esac
+          done <<<"$types"
+
+          echo "eligible=true" >>"$GITHUB_OUTPUT"
+
+      - name: Merge
+        if: steps.update_type.outputs.eligible == 'true'
+        run: |
+          set -euo pipefail
+          number="${{ steps.pr.outputs.number }}"
+
+          # The head SHA was compared above; this closes the window between
+          # that comparison and this call.
+          if gh pr merge "$number" \
+              "--$MERGE_METHOD" \
+              --match-head-commit "$HEAD_SHA" \
+              --delete-branch; then
+            echo "::notice::Merged #$number."
+          else
+            # Dependabot rebases its own branches, and the tests run again,
+            # so a rebase that no longer applies resolves itself.
+            echo "::notice::#$number could not be merged now; leaving it open."
+          fi

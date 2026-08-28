@@ -9,6 +9,7 @@ Reusable GitHub Actions workflows shared across a set of related repos. Each wor
 | `ci.yml` | Lint + typecheck + test (via `make check`), optional pre-release-dep gate (PR to main only), optional branch pre-release publish (via `make publish`, for the shared library) |
 | `publish-tag.yml` | On tag push: optional container publish, optional npm publish, optional release-asset upload |
 | `release.yml` | release-please-driven release PR creation and auto-merge |
+| `dependabot-automerge.yml` | Merge a dependabot PR once every check on its head commit passes, if the update is patch or minor |
 
 Consumer shims pick which inputs to flip. A typical TypeScript server repo's `.github/workflows/ci.yml` looks like:
 
@@ -69,6 +70,65 @@ Tags follow conventional-commits-driven release-please bumps. No floating `v1` t
 | Input | Type | Default | Purpose |
 |-------|------|---------|---------|
 | `release-type` | string | **required** | release-please release type. `node` for app repos with a `package.json`; `simple` for meta repos with no version to bump. No default — callers must specify. |
+
+### `dependabot-automerge.yml`
+
+| Input | Type | Default | Purpose |
+|-------|------|---------|---------|
+| `merge-method` | string | `rebase` | `rebase` or `merge`. `squash` errors rather than defaulting away, because it collapses the Conventional Commit messages release tooling reads from the default branch. |
+| `allowed-update-types` | string | `version-update:semver-patch version-update:semver-minor` | Space-separated dependabot `update-type` values. Every dependency in a PR must declare one of them, so a dependency carrying no `update-type` at all can never match. |
+
+Its shim is not shaped like the others, because a merge decision can only be
+made once the tests have finished:
+
+```yaml
+name: Dependabot Auto-Merge
+
+on:
+  workflow_run:
+    workflows: ['Testing']    # the name of the workflow that runs your tests
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.actor.login == 'dependabot[bot]'
+      && startsWith(github.event.workflow_run.head_branch, 'dependabot/')
+    uses: swiftaspect/gha-workflows/.github/workflows/dependabot-automerge.yml@v<version>
+    secrets: inherit
+```
+
+`pull_request` cannot be used. Dependabot's own `pull_request` events receive a
+read-only `GITHUB_TOKEN` that cannot merge, and they fire when the PR opens,
+before the tests have run. `workflow_run` is the only event that arrives after
+a test run finishes and carries a token that can act on the result. It also
+means a PR cannot change the rules that judge it, since `workflow_run`
+workflows always execute the copy on the default branch.
+
+`permissions` is required. A called workflow can only narrow what its caller
+was given, so where `default_workflow_permissions` is `read` the merge is
+refused without it.
+
+The `if` is a cost filter, not the security boundary. A test workflow that
+triggers on `push` runs for every branch, including branches with no PR, and
+the guard skips those before a runner is allocated.
+
+Before merging, the workflow checks:
+
+| Check | Notes |
+|-------|-------|
+| PR author is `dependabot[bot]` | read from the API, not the event actor |
+| Head commit author is `dependabot[bot]` and its signature is verified | catches a commit pushed onto the branch by anyone else |
+| Head branch is in this repository | a fork can never qualify |
+| Head commit still equals the tested commit | re-checked through `--match-head-commit` at merge time |
+| Base is the default branch, and the PR is not a draft | |
+| Every check run on the head SHA has concluded, and none failed | all of them, not only the workflow that triggered this one; `skipped` and `neutral` count as passes |
+| Every dependency declares an allowed `update-type` | read from the metadata block in the commit message |
 
 ## Secrets and variables expected
 
