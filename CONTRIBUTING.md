@@ -41,4 +41,10 @@ docker run --rm -v "$(pwd)":/repo:Z -w /repo rhysd/actionlint:latest .github/wor
 
 ## Release
 
-Managed by release-please. Merging the auto-generated release PR cuts a tag. Consumers bump their pins on their own schedule.
+Managed by release-please. Merging the auto-generated release PR cuts a tag,
+and `self-major-tag.yml` moves `v1` onto it.
+
+Consumers bump their pins on their own schedule. The exception is a shim that
+lives inside a project template, which pins `@v1` because dependabot cannot
+reach a pin inside a jinja source. Anything merged here reaches those repos on
+their next run, with no review step in between.
