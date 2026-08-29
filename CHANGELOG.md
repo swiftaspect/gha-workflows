@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/swiftaspect/gha-workflows/compare/v1.7.0...v1.7.1) (2026-08-29)
+
+
+### Bug Fixes
+
+* **deps:** bump raven-actions/actionlint from 2.1.2 to 2.2.0 ([375f1e8](https://github.com/swiftaspect/gha-workflows/commit/375f1e885054f0678aaf3a2f615980cc72bc9dbc))
+
 ## [1.7.0](https://github.com/swiftaspect/gha-workflows/compare/v1.6.0...v1.7.0) (2026-08-28)
 
 
