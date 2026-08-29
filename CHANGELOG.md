@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.3](https://github.com/swiftaspect/gha-workflows/compare/v1.7.2...v1.7.3) (2026-08-29)
+
+
+### Bug Fixes
+
+* **deps:** bump docker/login-action from 4.2.0 to 4.6.0 ([9e6115e](https://github.com/swiftaspect/gha-workflows/commit/9e6115ec1158504ae382eb5dcbe601e1e6d76c68))
+
 ## [1.7.2](https://github.com/swiftaspect/gha-workflows/compare/v1.7.1...v1.7.2) (2026-08-29)
 
 
