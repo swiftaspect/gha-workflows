@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/swiftaspect/gha-workflows/compare/v1.7.1...v1.7.2) (2026-08-29)
+
+
+### Bug Fixes
+
+* **deps:** bump actions/checkout from 6.0.2 to 7.0.1 ([073285a](https://github.com/swiftaspect/gha-workflows/commit/073285a42e30d554a7507bc8c9af3d443b9663c4))
+
 ## [1.7.1](https://github.com/swiftaspect/gha-workflows/compare/v1.7.0...v1.7.1) (2026-08-29)
 
 
