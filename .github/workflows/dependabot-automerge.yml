@@ -182,9 +182,12 @@ jobs:
           set -euo pipefail
           number="${{ steps.pr.outputs.number }}"
 
-          # The head SHA was compared above; this closes the window between
-          # that comparison and this call.
+          # `gh pr merge` reads the repository from a git remote. This job has
+          # no checkout, so `--repo` cannot be dropped.
+          # The head SHA was compared above; `--match-head-commit` closes the
+          # window between that comparison and this call.
           if gh pr merge "$number" \
+              --repo "$GITHUB_REPOSITORY" \
               "--$MERGE_METHOD" \
               --match-head-commit "$HEAD_SHA" \
               --delete-branch; then
