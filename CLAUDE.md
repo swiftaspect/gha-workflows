@@ -16,7 +16,7 @@ Before considering a task complete:
 - Workflows here are consumed by other repos. A bug lands in every consumer the next time they update their pin. Be conservative.
 - The `release.yml` reusable workflow has a required `release-type` input with no default — app repos pass `node`, meta repos pass `simple`.
 - Never add a `latest` tag anywhere.
-- `gh pr merge --auto --rebase <number>` — no `-R`/`--repo` flag (token is already scoped).
+- `gh pr merge` needs `--repo` in any job without an `actions/checkout` step.
 
 ## Agent skills
 

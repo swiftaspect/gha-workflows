@@ -21,7 +21,7 @@ docker run --rm -v "$(pwd)":/repo:Z -w /repo rhysd/actionlint:latest .github/wor
 - Every input is documented with a `description` explaining when to use it, what it does, and any caveats. No silent behavior.
 - No floating refs anywhere — all actions pinned by tag (`actions/checkout@v5`, not `@main`).
 - No `latest` tag references in any workflow.
-- `gh pr merge` must not use `-R`/`--repo` before the subcommand; the `GH_TOKEN` is scoped to the repo.
+- `gh pr merge` takes `--repo` after the subcommand, never `-R` before it. It reads the repository from a git remote, not from `GH_TOKEN`, so a job without an `actions/checkout` step has to pass it.
 
 ## Commit and PR workflow
 
