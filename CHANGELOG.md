@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.4](https://github.com/swiftaspect/gha-workflows/compare/v1.7.3...v1.7.4) (2026-08-30)
+
+
+### Bug Fixes
+
+* fail the auto-merge job when the merge error is not a dependabot race ([9c2379e](https://github.com/swiftaspect/gha-workflows/commit/9c2379e9ec283a02d48a1c8028426ef6c52995ea))
+* pass --repo to gh pr merge so the auto-merge can run ([71d04ef](https://github.com/swiftaspect/gha-workflows/commit/71d04ef94ab1a6c0177e61f3919b45d7fb6bc0d7))
+
 ## [1.7.3](https://github.com/swiftaspect/gha-workflows/compare/v1.7.2...v1.7.3) (2026-08-29)
 
 
