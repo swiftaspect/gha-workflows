@@ -143,6 +143,15 @@ Before merging, the workflow checks:
 | Every check run on the head SHA has concluded, and none failed | all of them, not only the workflow that triggered this one; `skipped` and `neutral` count as passes |
 | Every dependency declares an allowed `update-type` | read from the metadata block in the commit message |
 
+A pull request that fails one of those checks is left open, and the job passes.
+Nothing is wrong. A human decides from there.
+
+The merge is different. Dependabot rebases its own branches and the tests run
+again. A merge that loses that race is a notice, and the next run merges. Every
+other merge failure fails the job, including a branch protection that forbids
+the merge. That case never resolves itself, so a repository configured that way
+should not run this workflow.
+
 ## Secrets and variables expected
 
 Consumers must have installed the SAGHAH GitHub App and must expose these org-level values:

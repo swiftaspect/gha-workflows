@@ -186,14 +186,29 @@ jobs:
           # no checkout, so `--repo` cannot be dropped.
           # The head SHA was compared above; `--match-head-commit` closes the
           # window between that comparison and this call.
-          if gh pr merge "$number" \
+          if output=$(gh pr merge "$number" \
               --repo "$GITHUB_REPOSITORY" \
               "--$MERGE_METHOD" \
               --match-head-commit "$HEAD_SHA" \
-              --delete-branch; then
+              --delete-branch 2>&1); then
+            printf '%s\n' "$output"
             echo "::notice::Merged #$number."
-          else
-            # Dependabot rebases its own branches, and the tests run again,
-            # so a rebase that no longer applies resolves itself.
-            echo "::notice::#$number could not be merged now; leaving it open."
+            exit 0
           fi
+
+          printf '%s\n' "$output"
+
+          # Dependabot rebases its own branches, so a lost race resolves on the
+          # next run. Any other failure is a defect here and has to fail the job.
+          case "$output" in
+            *'cannot be cleanly created'* \
+              | *'Pull Request is not mergeable'* \
+              | *'Head branch was modified'* \
+              | *'Base branch was modified'*)
+              echo "::notice::#$number could not be merged now; leaving it open."
+              ;;
+            *)
+              echo "::error::#$number could not be merged, and the reason is not a race with dependabot."
+              exit 1
+              ;;
+          esac
