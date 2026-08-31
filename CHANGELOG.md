@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.5](https://github.com/swiftaspect/gha-workflows/compare/v1.7.4...v1.7.5) (2026-08-31)
+
+
+### Bug Fixes
+
+* **ci:** publish a preview only for labelled pull requests ([ac3276e](https://github.com/swiftaspect/gha-workflows/commit/ac3276e8a78755da0e347fb27c7cdc90c6c25c40))
+
 ## [1.7.4](https://github.com/swiftaspect/gha-workflows/compare/v1.7.3...v1.7.4) (2026-08-30)
 
 
