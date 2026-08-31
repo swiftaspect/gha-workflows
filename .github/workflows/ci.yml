@@ -75,6 +75,26 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v7.0.1
+        with:
+          # The commit-message check needs the pull request's commits, and
+          # the default shallow clone has none of them.
+          fetch-depth: 0
+
+      - name: Lint the pull request's commit messages
+        if: github.event_name == 'pull_request'
+        run: |
+          # Language-agnostic, like the manifest gate below: the repository
+          # owns the target, this workflow only delegates. Runs before the
+          # suite so a bad prefix fails in seconds rather than minutes.
+          if grep -qE '^lint-commits:' Makefile 2>/dev/null; then
+            # head.sha, not HEAD: on a pull request the checkout is the
+            # merge ref, so HEAD is a synthetic merge commit.
+            make lint-commits \
+              COMMIT_RANGE_FROM=${{ github.event.pull_request.base.sha }} \
+              COMMIT_RANGE_TO=${{ github.event.pull_request.head.sha }}
+          else
+            echo "::notice::No 'lint-commits' target in Makefile; skipping the commit-message check. The language template provides this target; add it to enable the check."
+          fi
 
       - name: Bring up compose stack
         if: inputs.compose-up-for-tests

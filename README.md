@@ -6,7 +6,7 @@ Reusable GitHub Actions workflows shared across a set of related repos. Each wor
 
 | Workflow | Purpose |
 |----------|---------|
-| `ci.yml` | Lint + typecheck + test (via `make check`), optional pre-release-dep gate (PR to main only), optional branch pre-release publish (via `make publish`, for the shared library) |
+| `ci.yml` | Lint + typecheck + test (via `make check`), commit-message lint on pull requests (via `make lint-commits`), optional pre-release-dep gate (PR to main only), optional branch pre-release publish (via `make publish`, for the shared library) |
 | `publish-tag.yml` | On tag push: optional container publish, optional npm publish, optional release-asset upload |
 | `release.yml` | release-please-driven release PR creation and auto-merge |
 | `dependabot-automerge.yml` | Merge a dependabot PR once every check on its head commit passes, if the update is patch or minor |
@@ -36,6 +36,8 @@ jobs:
 The shared library additionally sets `publish-on-branch: true`. The pre-release publishes when a pull request carries the `preview` label and the checks pass, so `make sync-branch-deps` in a sibling repository can resolve a matching branch build. Add the label when another repository needs to pin the branch; without it nothing publishes.
 
 **Branch pre-releases go to the registry only — never a GitHub Release.** The publish step inherits the workflow's `permissions: contents: read, packages: write`, so it is structurally incapable of creating a GitHub Release or pushing a git tag (both require `contents: write`). Branch builds land solely as registry artifacts: an npm dist-tag and/or a container tag. GitHub Releases and git tags are produced *only* by the real-release path (`release.yml` / `publish-tag.yml`, which run with `contents: write`). A repo's `make publish` must uphold this — it may push to package/container registries but must not run `gh release …` or `git tag`/`git push`. The workflow exposes `GITHUB_REF_NAME`, `GITHUB_RUN_NUMBER`, and `GITHUB_TOKEN` to it, and the Makefile owns the language-specific translation.
+
+On a pull request, the workflow lints the commit messages in the pull request before running anything else. It calls `make lint-commits COMMIT_RANGE_FROM=<base sha>`, so the repository owns the tool and the rules. A repository with no `lint-commits` target is skipped with a notice, the same way the manifest dep gate is. The checkout uses `fetch-depth: 0` because the default shallow clone contains none of the commits being checked.
 
 ## Versioning
 
