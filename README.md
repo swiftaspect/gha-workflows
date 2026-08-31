@@ -33,9 +33,9 @@ jobs:
     secrets: inherit
 ```
 
-The shared library additionally sets `publish-on-branch: true` so branch pushes invoke `make publish`, which is responsible for emitting a branch-tagged pre-release artifact consumable by `make sync-branch-deps`.
+The shared library additionally sets `publish-on-branch: true`. The pre-release publishes when a pull request carries the `preview` label and the checks pass, so `make sync-branch-deps` in a sibling repository can resolve a matching branch build. Add the label when another repository needs to pin the branch; without it nothing publishes.
 
-**Branch pre-releases go to the registry only — never a GitHub Release.** The `publish-on-branch` job runs under `permissions: contents: read, packages: write`, so it is structurally incapable of creating a GitHub Release or pushing a git tag (both require `contents: write`). Branch builds land solely as registry artifacts: an npm dist-tag and/or a container tag. GitHub Releases and git tags are produced *only* by the real-release path (`release.yml` / `publish-tag.yml`, which run with `contents: write`). A repo's `make publish` must uphold this — it may push to package/container registries but must not run `gh release …` or `git tag`/`git push`.
+**Branch pre-releases go to the registry only — never a GitHub Release.** The publish step inherits the workflow's `permissions: contents: read, packages: write`, so it is structurally incapable of creating a GitHub Release or pushing a git tag (both require `contents: write`). Branch builds land solely as registry artifacts: an npm dist-tag and/or a container tag. GitHub Releases and git tags are produced *only* by the real-release path (`release.yml` / `publish-tag.yml`, which run with `contents: write`). A repo's `make publish` must uphold this — it may push to package/container registries but must not run `gh release …` or `git tag`/`git push`. The workflow exposes `GITHUB_REF_NAME`, `GITHUB_RUN_NUMBER`, and `GITHUB_TOKEN` to it, and the Makefile owns the language-specific translation.
 
 ## Versioning
 
@@ -62,7 +62,7 @@ review step in between.
 
 | Input | Type | Default | Purpose |
 |-------|------|---------|---------|
-| `publish-on-branch` | bool | `false` | After `make check` passes on a non-main branch, run `make publish` so the repo's Makefile emits a branch-tagged pre-release artifact (npm dist-tag, container tag, …). Language-agnostic — the Makefile owns the translation. |
+| `publish-on-branch` | bool | `false` | After `make check` passes, on a pull request labelled `preview`, run `make publish` so the repo's Makefile emits a branch-tagged pre-release artifact (npm dist-tag, container tag, …). Language-agnostic — the Makefile owns the translation. |
 | `check-prerelease-deps` | bool | `false` | PR gate (only runs on PRs targeting `main`): rejects pre-release / dist-tag `@swiftaspect/*` sibling deps and branch-tagged `ghcr.io/swiftaspect/*` compose images. The manifest half is delegated to the repo's `make check-prerelease-deps` target (language-owned; skipped with a notice if absent); the compose image-tag check runs in-workflow (already language-agnostic). |
 | `compose-up-for-tests` | bool | `false` | Run `make start` before `make check` and `make stop` after. For repos whose tests need the compose dependency stack. |
 
