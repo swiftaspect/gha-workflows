@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/swiftaspect/gha-workflows/compare/v1.8.0...v1.8.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **ci:** run commitlint here instead of delegating to the repository ([57a14b7](https://github.com/swiftaspect/gha-workflows/commit/57a14b77e8f27f15c0769e85bceb4b165d946d9f))
+
 ## [1.8.0](https://github.com/swiftaspect/gha-workflows/compare/v1.7.5...v1.8.0) (2026-09-01)
 
 
