@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/swiftaspect/gha-workflows/compare/v1.7.5...v1.8.0) (2026-09-01)
+
+
+### Features
+
+* **ci:** lint the pull request's commit messages ([a218a4a](https://github.com/swiftaspect/gha-workflows/commit/a218a4a412098264f870895028e5ef4ea81d0ffb))
+
 ## [1.7.5](https://github.com/swiftaspect/gha-workflows/compare/v1.7.4...v1.7.5) (2026-08-31)
 
 
