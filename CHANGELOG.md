@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/swiftaspect/gha-workflows/compare/v1.8.1...v1.8.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* **ci:** stop running twice on every pull request ([7466943](https://github.com/swiftaspect/gha-workflows/commit/7466943df399c63b1f8996e3bd40edea10a824ab))
+
 ## [1.8.1](https://github.com/swiftaspect/gha-workflows/compare/v1.8.0...v1.8.1) (2026-09-01)
 
 
