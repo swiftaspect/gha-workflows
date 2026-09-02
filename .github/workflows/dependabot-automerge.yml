@@ -13,6 +13,18 @@ on:
           tooling reads from the default branch.
         type: string
         default: rebase
+      blocked-dependency-patterns:
+        description: |
+          Space-separated shell glob patterns. A pull request touching any
+          dependency whose name matches one is left for review, whatever its
+          update type, when that pull request would cut a release. Defaults
+          to this repository's own organization, because merging a sibling
+          bump unattended releases this repository, which produces the next
+          sibling bump, and so on around the graph. A bump that cuts no
+          release cannot cascade, so a `chore` pull request is never blocked
+          by this. CI plumbing bumps keep merging on their own.
+        type: string
+        default: ''
       allowed-update-types:
         description: |
           Space-separated dependabot `update-type` values. Every dependency
@@ -39,6 +51,9 @@ jobs:
       RUN_ACTOR: ${{ github.event.workflow_run.actor.login }}
       MERGE_METHOD: ${{ inputs.merge-method }}
       ALLOWED_UPDATE_TYPES: ${{ inputs.allowed-update-types }}
+      BLOCKED_PATTERNS: >-
+        ${{ inputs.blocked-dependency-patterns
+            || format('{0}/* @{0}/*', github.repository_owner) }}
     steps:
       - name: Reject a merge method that would rewrite the commits
         run: |
@@ -162,6 +177,35 @@ jobs:
             echo "::notice::#$number left for review: $((names - typed)) of $names dependencies declare no update-type."
             exit 0
           fi
+
+          subject=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA" \
+                    --jq '.commit.message' | head -1)
+
+          # release-please releases on feat, fix, and any breaking `!`. Keyed
+          # on what releases rather than on what does not, so renaming a
+          # non-releasing prefix cannot silently start blocking.
+          type=${subject%%[(!:]*}
+          releases=false
+          case "$type" in feat | fix) releases=true ;; esac
+          case "${subject%%:*}" in *!) releases=true ;; esac
+
+          case "$releases" in
+            false) ;;
+            *)
+              while read -r name; do
+                [ -n "$name" ] || continue
+                for pattern in $BLOCKED_PATTERNS; do
+                  # shellcheck disable=SC2254 # the pattern is meant to glob
+                  case "$name" in
+                    $pattern)
+                      echo "::notice::#$number left for review: $name matches $pattern and this bump cuts a release."
+                      exit 0
+                      ;;
+                  esac
+                done
+              done <<<"$(printf '%s\n' "$block" | sed -n 's/^- dependency-name: //p')"
+              ;;
+          esac
 
           while read -r type; do
             [ -n "$type" ] || continue
