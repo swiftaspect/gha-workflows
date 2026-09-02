@@ -5,10 +5,10 @@ name: Self CI
 # bare actionlint run over the reusable workflow files themselves.
 
 on:
-  push:
-    branches-ignore:
-      - 'release-please*'
   pull_request:
+    branches:
+      - main
+  push:
     branches:
       - main
 
