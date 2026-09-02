@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/swiftaspect/gha-workflows/compare/v1.8.2...v1.9.0) (2026-09-02)
+
+
+### Features
+
+* **automerge:** leave the organization's own releasing bumps for review ([d49a902](https://github.com/swiftaspect/gha-workflows/commit/d49a9026e8f06570c31669a51f72ccbcad3f49f4))
+
 ## [1.8.2](https://github.com/swiftaspect/gha-workflows/compare/v1.8.1...v1.8.2) (2026-09-02)
 
 
