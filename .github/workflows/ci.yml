@@ -13,6 +13,17 @@ name: Reusable CI
 on:
   workflow_call:
     inputs:
+      app-token-repositories:
+        description: |
+          Comma-separated repositories under the caller's owner that the
+          check run needs to read, for example a private sibling whose
+          release assets `make check` downloads. When set, a GitHub App
+          installation token is minted and passed to `make start` and
+          `make check` as GH_TOKEN, which `gh` prefers over GITHUB_TOKEN.
+          Requires the `SAGHAH_CLIENT_ID` variable and `SAGHAH_PRIVATE_KEY`
+          secret, with the app installed on the listed repositories.
+        type: string
+        default: ''
       check-prerelease-deps:
         description: |
           When true, fail if package.json references pre-release or dist-tag
@@ -95,15 +106,27 @@ jobs:
           npx --yes -p @commitlint/cli@21 -p @commitlint/config-conventional@21 \
             commitlint --from "$BASE_SHA" --to "$HEAD_SHA"
 
+      - name: Mint an app token for cross-repository reads
+        id: app-token
+        if: inputs.app-token-repositories != ''
+        uses: actions/create-github-app-token@v3.2.0
+        with:
+          client-id: ${{ vars.SAGHAH_CLIENT_ID }}
+          private-key: ${{ secrets.SAGHAH_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ inputs.app-token-repositories }}
+
       - name: Bring up compose stack
         if: inputs.compose-up-for-tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: make start
 
       - name: Run check (lint + typecheck + test)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           CONTAINER_NETWORK: --network bridge
         run: make check
 
