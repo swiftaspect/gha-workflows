@@ -67,6 +67,7 @@ review step in between.
 | `publish-on-branch` | bool | `false` | After `make check` passes, on a pull request labelled `preview`, run `make publish` so the repo's Makefile emits a branch-tagged pre-release artifact (npm dist-tag, container tag, …). Language-agnostic — the Makefile owns the translation. |
 | `check-prerelease-deps` | bool | `false` | PR gate (only runs on PRs targeting `main`): rejects pre-release / dist-tag `@swiftaspect/*` sibling deps and branch-tagged `ghcr.io/swiftaspect/*` compose images. The manifest half is delegated to the repo's `make check-prerelease-deps` target (language-owned; skipped with a notice if absent); the compose image-tag check runs in-workflow (already language-agnostic). |
 | `compose-up-for-tests` | bool | `false` | Run `make start` before `make check` and `make stop` after. For repos whose tests need the compose dependency stack. |
+| `app-token-repositories` | string | `''` | Comma-separated repositories under the caller's owner that the check run needs to read (for example, a private sibling whose release assets `make check` downloads). Mints a GitHub App installation token via `vars.SAGHAH_CLIENT_ID` + `secrets.SAGHAH_PRIVATE_KEY` and passes it to `make start` / `make check` as `GH_TOKEN`. `gh` prefers `GH_TOKEN` over `GITHUB_TOKEN`, so npm and registry flows keep the default token. |
 
 ### `publish-tag.yml`
 
