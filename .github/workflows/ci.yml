@@ -16,12 +16,9 @@ on:
       app-token-repositories:
         description: |
           Comma-separated repositories under the caller's owner that the
-          check run needs to read, for example a private sibling whose
-          release assets `make check` downloads. When set, a GitHub App
-          installation token is minted and passed to `make start` and
-          `make check` as GH_TOKEN, which `gh` prefers over GITHUB_TOKEN.
-          Requires the `SAGHAH_CLIENT_ID` variable and `SAGHAH_PRIVATE_KEY`
-          secret, with the app installed on the listed repositories.
+          check run needs to read. Requires the `SAGHAH_CLIENT_ID` variable
+          and `SAGHAH_PRIVATE_KEY` secret, with the app installed on the
+          listed repositories.
         type: string
         default: ''
       check-prerelease-deps:
