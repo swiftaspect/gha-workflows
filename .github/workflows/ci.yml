@@ -116,14 +116,12 @@ jobs:
       - name: Bring up compose stack
         if: inputs.compose-up-for-tests
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: make start
 
       - name: Run check (lint + typecheck + test)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           CONTAINER_NETWORK: --network bridge
         run: make check
 
