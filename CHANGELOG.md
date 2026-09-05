@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/swiftaspect/gha-workflows/compare/v1.9.0...v1.10.0) (2026-09-05)
+
+
+### Features
+
+* **ci:** mint an optional app token for cross-repository reads ([a2faf42](https://github.com/swiftaspect/gha-workflows/commit/a2faf42cc48835eed5e387589845b67dc76a226e))
+
 ## [1.9.0](https://github.com/swiftaspect/gha-workflows/compare/v1.8.2...v1.9.0) (2026-09-02)
 
 
