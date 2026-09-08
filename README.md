@@ -10,6 +10,7 @@ Reusable GitHub Actions workflows shared across a set of related repos. Each wor
 | `publish-tag.yml` | On tag push: optional container publish, optional npm publish, optional release-asset upload |
 | `release.yml` | release-please-driven release PR creation and auto-merge |
 | `dependabot-automerge.yml` | Merge a dependabot PR once every check on its head commit passes, if the update is patch or minor |
+| `review.yml` | Review a pull request against the repository's `REVIEW.md` with Claude Code and post one comment. Never approves, never pushes. Skipped with a notice when the repository has no policy file or no Claude credential |
 
 Consumer shims pick which inputs to flip. A typical TypeScript server repo's `.github/workflows/ci.yml` looks like:
 
@@ -82,6 +83,40 @@ review step in between.
 | Input | Type | Default | Purpose |
 |-------|------|---------|---------|
 | `release-type` | string | **required** | release-please release type. `node` for app repos with a `package.json`; `simple` for meta repos with no version to bump. No default — callers must specify. |
+
+### `review.yml`
+
+| Input | Type | Default | Purpose |
+|-------|------|---------|---------|
+| `policy-file` | string | `REVIEW.md` | Path to the review policy, relative to the repository root. The review applies only what this file says. |
+| `claude-args` | string | `--max-turns 30` | Extra Claude Code CLI flags for the run, for example `--model claude-sonnet-5`. |
+
+The run needs one credential in the caller's secrets: `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) or `ANTHROPIC_API_KEY`. With neither, the job posts a notice and passes, so a repository can adopt the shim before the credential exists. The comment posts through `GITHUB_TOKEN`, so no GitHub App install is needed. The tool set is read-only plus inline comments.
+
+Shim:
+
+```yaml
+name: Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  review:
+    if: >-
+      !github.event.pull_request.draft
+      && github.actor != 'dependabot[bot]'
+      && !startsWith(github.head_ref, 'release-please')
+    uses: swiftaspect/gha-workflows/.github/workflows/review.yml@v<version>
+    secrets: inherit
+```
 
 ### `dependabot-automerge.yml`
 

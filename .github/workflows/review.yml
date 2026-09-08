@@ -1,0 +1,86 @@
+name: Reusable review
+
+# Called by consumer repos' .github/workflows/review.yml shim:
+#
+#   jobs:
+#     review:
+#       uses: swiftaspect/gha-workflows/.github/workflows/review.yml@v<version>
+#       secrets: inherit
+#
+# The review reads the repository's REVIEW.md and posts one comment on the
+# pull request. It never approves and never pushes. A human merges.
+
+on:
+  workflow_call:
+    inputs:
+      policy-file:
+        description: |
+          Path to the review policy, relative to the repository root. The
+          review applies only what this file says. A repository without it
+          is skipped with a notice.
+        type: string
+        default: REVIEW.md
+      claude-args:
+        description: |
+          Extra Claude Code CLI flags for the review run, for example
+          `--model claude-sonnet-5` or `--max-turns 40`.
+        type: string
+        default: '--max-turns 30'
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  review:
+    name: Review against the policy file
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          # The review reads the pull request's own commits, and the default
+          # shallow clone has none of them.
+          fetch-depth: 0
+
+      - name: Check the credentials and the policy file
+        id: preflight
+        env:
+          OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          POLICY_FILE: ${{ inputs.policy-file }}
+        run: |
+          if [ -z "$OAUTH_TOKEN" ] && [ -z "$API_KEY" ]; then
+            echo "::notice::Neither CLAUDE_CODE_OAUTH_TOKEN nor ANTHROPIC_API_KEY is set; skipping the review."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ ! -f "$POLICY_FILE" ]; then
+            echo "::notice::No $POLICY_FILE in this repository; skipping the review."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "run=true" >> "$GITHUB_OUTPUT"
+
+      - name: Review the pull request
+        if: steps.preflight.outputs.run == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          use_sticky_comment: true
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }} in ${{ github.repository }}.
+
+            Read `${{ inputs.policy-file }}` at the repository root first. It defines the review passes, the line between important and nit, the excluded paths, and the output format. Apply only what it says.
+
+            Read the diff with `gh pr diff ${{ github.event.pull_request.number }}` and the description with `gh pr view ${{ github.event.pull_request.number }}`. Read any file you need for context.
+
+            Post the result as your final comment in the format the policy file gives. Do not approve, request changes, edit files, or push.
+          claude_args: |
+            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh issue view:*),mcp__github_inline_comment__create_inline_comment"
+            ${{ inputs.claude-args }}
