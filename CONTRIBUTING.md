@@ -61,3 +61,31 @@ Consumers bump their pins on their own schedule. The exception is a shim that
 lives inside a project template, which pins `@v1` because dependabot cannot
 reach a pin inside a jinja source. Anything merged here reaches those repos on
 their next run, with no review step in between.
+
+## Review
+
+`REVIEW.md` at the repository root is the review policy: the passes, the
+line between important and nit, the excluded paths, and the output
+format. `/pr-review-checklist` from the
+[pvaas-skills](https://github.com/swiftaspect/skills) collection applies
+it to a pull request from a local session. The reviewer never approves
+and never pushes. A human merges.
+
+## Claude Code hooks
+
+Two PreToolUse hooks are committed under `.claude/hooks/` and wired in
+`.claude/settings.json`. They need `python3` on the host.
+
+- `guard-managed-files.py` denies an edit to any path listed in
+  `.copier-managed-files`, through the edit tools or through a shell
+  write. This repository has no such file today, so the hook allows
+  every edit until one exists.
+- `guard-test-files.py` asks a person before an edit to an existing test
+  file on a `fix/` branch. A new test file passes, because the failing
+  test comes first. In a non-interactive run the ask is a deny. The hook
+  matches every path under `tests/`, so both test tiers are guarded.
+
+`REVIEW.md` and the hooks are copies of the files
+copier-template-typescript ships to the repositories it manages. Each
+banner names the template commit it came from. This repository owns its
+copies; a change here does not need a template change.
